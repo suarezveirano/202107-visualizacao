@@ -1,0 +1,76 @@
+---
+title: "Dashboard Trabalho Final"
+author: "GS"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    source_code: embed
+    social: [ "twitter", "linkedin" ]
+    navbar:
+      - { title: "Trabalho Final", href: "https://example.com/about", align: right}
+      - { icon: fa-address-card, href: "https://example.com/about", align: right}
+    theme: yeti
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(wordcloud2)
+
+resistance_chart <- load(file = "resistance_chart.RData")
+small_trial <- resistance_chart %>%
+  mutate_if(is.character,as.factor)
+
+resistance_data <- load(file = "resistance_data.RData")
+data_trial <- resistance_data %>%
+  mutate_if(is.character,as.factor)
+```
+
+# Data
+
+
+# Plots
+
+## Column {data-width=650}{.tabset}
+
+### EVOLUTION CASE RESISTENCE
+
+```{r echo=FALSE, warning=FALSE}
+data_trial %>% 
+  filter(country==c('United States','Australia','Brazil','Canada','China')) %>% 
+  ggplot(aes(x = first_year, y = resist_id, color = country)) +
+  geom_line() 
+
+```
+
+## Column {data-width=350}
+
+### SPECIES
+
+```{r echo=FALSE, warning=FALSE}
+# Species
+data_trial %>%
+  group_by(species) %>%
+  summarise(n = n()) %>%
+  wordcloud2(size = 0.7)
+```
+
+### COUNTRY
+
+```{r echo=FALSE, warning=FALSE}
+data_trial %>%
+  group_by(country) %>%
+  summarise(n = n()) %>%
+  wordcloud2(size = 0.9, shape = 'pentagon')
+```
+
+### SOA
+
+```{r echo=FALSE, warning=FALSE}
+small_trial %>% 
+  ggplot() + 
+  aes(y = resistant, fill = soa) +
+  geom_boxplot() +
+  theme(legend.position = "top")
+```

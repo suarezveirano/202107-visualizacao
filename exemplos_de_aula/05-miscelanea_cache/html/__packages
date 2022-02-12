@@ -1,0 +1,12 @@
+base
+sf
+ggplot2
+dplyr
+leaflet
+plotly
+highcharter
+reactable
+gganimate
+patchwork
+ggrepel
+ggalt

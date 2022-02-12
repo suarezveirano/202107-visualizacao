@@ -1,0 +1,188 @@
+---
+title: "03-ggplot_ejercicio"
+author: "Gonzalo Suarez"
+date: "7/31/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Parte 1
+
+```{r}
+library(dados)  # Pacote com bases de dados em Português
+library(magrittr)  # Pacote para utilizar o Pipe %>%
+```
+
+```{r}
+ # calcula a média
+media_massa_g <-
+  mean(pinguins$massa_corporal, na.rm = TRUE) 
+
+ # converte de gramas para kilogramas
+media_massa_kg_completo <-
+  media_massa_g / 1000 
+
+ # arredonda o valor para ter uma casa decimal
+media_massa_kg <- round(media_massa_kg_completo, 1)
+
+ # exibe o resultado
+media_massa_kg 
+```
+A média da massa corporal dos pinguins é `r media_massa_kg` kg.
+
+```{r}
+knitr::include_graphics("https://livro.curso-r.com/assets/img/relatorios/dados-hex.png")
+```
+
+```{r}
+media_massa <- pinguins %>% # usamos a base de pinguins
+  # agrupamos por especie e ilhas
+  dplyr::group_by(especie, ilha) %>%  
+  # calculamos a média da massa corporal 
+  dplyr::summarise(media_massa = mean(massa_corporal, na.rm = TRUE)) %>% 
+  # criamos uma nova coluna, com a massa em kg, e arredondada com 2 casas decimais
+  dplyr::mutate(media_massa_kg = round(media_massa / 1000, 2)) %>%  
+  # removemos a coluna da massa em gramas
+  dplyr::select(-media_massa)
+
+# Apresentamos o resultado da tabela:
+media_massa
+```
+
+```{r}
+media_massa %>%
+  knitr::kable()
+```
+
+```{r}
+media_massa %>%
+  DT::datatable()
+```
+
+# Parte 2
+```{r}
+#remotes::install_github("ewenme/ghibli")
+#install.packages('tvthemes')
+
+# load package
+library(ghibli)
+# see palette names and colours
+par(mfrow=c(7,3))
+for(i in names(ghibli_palettes)) print(ghibli_palette(i))
+
+library(tvthemes)
+```
+
+```{r}
+
+library(tidyverse)
+library(dados)
+
+temperatura_por_mes <- clima %>% group_by(origem, mes = lubridate::floor_date(data_hora, "month")) %>% 
+  summarise(temperatura_media = (mean(temperatura, na.rm = TRUE)-30)/2
+  ) %>% ungroup()
+
+temperatura_por_mes %>% 
+  ggplot() +
+  geom_line(aes(x = mes, y = origem, color = temperatura_media), size = 10) +
+    labs(
+    title = "Gráfico de linha",
+    subtitle = "Temperatura ao longo do tempo",
+    x = "Mês",
+    y = "Aeroporto mais próximo do ponto de medição",
+    color = "Temperatura média (ºC)" 
+  ) + 
+  theme_minimal() +
+  scale_colour_ghibli_c("MarnieMedium1")
+```
+
+# Parte 3
+
+```{r}
+library(ggplot2)
+library(magrittr) # Carregar o pipe %>%
+
+tibble::tibble(
+  alpha = 1:10,
+  alpha2 = log10(alpha^2)
+  ) %>% 
+  ggplot(aes(alpha, alpha2)) +
+  geom_line() +
+  labs(
+    x = expression(paste("Log",alpha^{2})),
+    y = "exercicio"
+  ) +
+  theme_minimal(25)
+```
+
+# Parte 4
+
+```{r}
+library(ggplot2)
+library(magrittr) # Carregar o pipe %>%
+
+tibble::tibble(
+  alpha = 1:10,
+  alpha2 = log10(alpha^2)
+  ) %>% 
+  ggplot(aes(alpha, alpha2)) +
+  geom_line() +
+  labs(
+    x = expression(paste("Log",alpha^{2})),
+    y = "exercicio"
+  ) +
+  theme(panel.background = element_rect(fill = "white", colour = "grey50"))
+
+```
+
+# Parte 5
+
+```{r}
+# Carregar pacotes
+library(ggplot2)
+library(magrittr) # Carregar o pipe %>%
+library(lubridate)
+library(googlesheets4)
+library(dplyr)
+
+# URL da base no google sheets - está no final da matéria
+url <- "https://docs.google.com/spreadsheets/d/1SRT77C0SnPEZucaeMSWQKngE9F7Vwb4irGwDgB7CxtM/edit?usp=sharing"
+
+# Importar a base usando a função read_sheet() do pacote googleshees4
+# Será necessário realizar a autenticação com a API do google
+# Ao executar essa função, acompanhe as mensagens do console.
+total_dia_brasileiros <- googlesheets4::read_sheet(url)
+
+# Veja a base importada
+dplyr::glimpse(total_dia_brasileiros)
+
+total_dia_brasileiros %>%
+  # transformar a coluna created_at em classe data
+  dplyr::mutate(created_at = lubridate::as_date(created_at)) %>% 
+  ggplot() +
+  geom_point(aes(x = created_at, y = media_15d), size = 0.1) +
+  geom_line(aes(x = created_at, y = media_15d)) +
+  geom_smooth(aes(x = created_at, y = media_15d), method = "lm", color = "red", se = F) +
+  theme_light() +
+  theme(axis.text = element_text(size = 6)) +
+  scale_x_date(breaks = c(as.Date("2020-08-01"),
+                          as.Date("2020-09-01"),
+                          as.Date("2020-10-01"),
+                          as.Date("2020-11-01"),
+                          as.Date("2020-12-01"),
+                          as.Date("2021-01-01"),
+                          as.Date("2021-02-01"),
+                          as.Date("2021-03-01")),
+               labels = c("Ago", "Set",
+                          "Out", "Nov", "Dez",
+                          "Jan", "Fev", "Mar")) +
+  labs(
+    title = "Perfis de cientistas e divulgadores no Twitter",
+    subtitle = "Tendencia de engajamento diário (media móvel, 15 dias).
+    Considera curtidas e RTs",
+    x = "", y = "\nEngajamento")
+
+```
+
